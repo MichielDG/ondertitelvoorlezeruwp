@@ -50,7 +50,7 @@ namespace OndertitelLezerUwp.ViewModels
         private bool _mediaElementTtsReady = false;
 
         private double _threshold = 0.2;
-        private int _accuracyThreshold = 90;
+        private const int _accuracyThreshold = 90;
 
         // Information about the camera device.
         private bool mirroringPreview = false;
@@ -393,7 +393,10 @@ namespace OndertitelLezerUwp.ViewModels
                 _ttsSynthesizer.Reset();
                 _trackSpokenSentences = new List<string>();
 
-                await _mediaCapture.VideoDeviceController.ExposureControl.SetAutoAsync(false);
+                if (_mediaCapture.VideoDeviceController.ExposureControl.Supported)
+                {
+                    await _mediaCapture.VideoDeviceController.ExposureControl.SetAutoAsync(false);
+                }
 
                 SymbolStartStop = Symbol.Pause;
                 SymbolStartStopColor = new SolidColorBrush(Windows.UI.Colors.Red);
@@ -609,9 +612,13 @@ namespace OndertitelLezerUwp.ViewModels
                 var allVideoDevices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
 
                 //only wors with backpanel hard coded/ can be refactored to leverage external camera
-                DeviceInformation cameraDevice = allVideoDevices.FirstOrDefault(x => x.EnclosureLocation.Panel == Windows.Devices.Enumeration.Panel.Back);
-               
-                
+                DeviceInformation cameraDevice = allVideoDevices.FirstOrDefault(x => x.EnclosureLocation != null && x.EnclosureLocation.Panel == Windows.Devices.Enumeration.Panel.Back);
+
+                if (cameraDevice == null)
+                {
+                    cameraDevice = allVideoDevices.FirstOrDefault();
+                }
+
                 if (cameraDevice == null)
                 {
                     StatusBackground = new SolidColorBrush(Windows.UI.Colors.Red);
