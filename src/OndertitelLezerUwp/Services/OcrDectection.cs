@@ -13,7 +13,7 @@ namespace OndertitelLezerUwp.Services
 {
     class OcrDectection
     {        
-        private Language _ocrLanguage;
+        private readonly Language _ocrLanguage;
         private OcrEngine _ocrEngine;
         private CachedOcrResultSet _cachedResultSet;
         private int _cachedResultSetLoop = 0;
@@ -119,25 +119,20 @@ namespace OndertitelLezerUwp.Services
                 Log.Information($"OcrDetection - Raw text: {ocrResult.Text}");
                 double left = bitmap.PixelWidth; //X
                 double top = bitmap.PixelHeight; //Y
-                double topOfLine = 0;
                 Rect tempRect = new Rect();
-                
-                foreach (var line in ocrResult.Lines)
-                {
-                    topOfLine = bitmap.PixelHeight;
-                    foreach (var word in line.Words)
-                    {
-                        left = (word.BoundingRect.Left < left) ? word.BoundingRect.Left : left;
-                        top = (word.BoundingRect.Top < top) ? word.BoundingRect.Top : top;
-                        if (totalWords == 0)
-                        {
-                            tempRect = new Rect(word.BoundingRect.Left, word.BoundingRect.Top, word.BoundingRect.Width, word.BoundingRect.Height);
-                        }
 
-                        ocrResultTextString += word.Text + " ";
-                        totalWords++;
-                        tempRect.Union(word.BoundingRect);
+                foreach (var word in ocrResult.Lines.SelectMany(x => x.Words))
+                {
+                    left = (word.BoundingRect.Left < left) ? word.BoundingRect.Left : left;
+                    top = (word.BoundingRect.Top < top) ? word.BoundingRect.Top : top;
+                    if (totalWords == 0)
+                    {
+                        tempRect = new Rect(word.BoundingRect.Left, word.BoundingRect.Top, word.BoundingRect.Width, word.BoundingRect.Height);
                     }
+
+                    ocrResultTextString += word.Text + " ";
+                    totalWords++;
+                    tempRect.Union(word.BoundingRect);
                 }
 
                 Rect boundingRectangle = new Rect(left, top, tempRect.Width, tempRect.Height);
